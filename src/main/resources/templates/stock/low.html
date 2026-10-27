@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#content}, ~{::#scripts})}">
+<head><title>Дефицит</title></head>
+<body>
+<div id="content">
+    <div class="page-head">
+        <div>
+            <h1>Дефицит материалов</h1>
+            <div class="sub">Товары, суммарный остаток которых по всем складам ниже минимального уровня</div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="table-wrap" th:if="${!items.isEmpty()}">
+            <table class="table">
+                <thead><tr><th>Товар</th><th>Категория</th><th class="num">Остаток</th><th class="num">Минимум</th><th>Обеспеченность</th><th class="num">Не хватает</th><th></th></tr></thead>
+                <tbody>
+                <tr th:each="i : ${items}">
+                    <td>
+                        <div class="cell-title" th:text="${i.product().name}">Товар</div>
+                        <div class="cell-sub"><span class="chip" th:text="${i.product().sku}">SKU</span></div>
+                    </td>
+                    <td class="muted" th:text="${i.product().category.name}">Категория</td>
+                    <td class="num strong" th:text="${#numbers.formatInteger(i.total(), 1, 'WHITESPACE')}">0</td>
+                    <td class="num muted" th:text="${#numbers.formatInteger(i.product().minStock, 1, 'WHITESPACE')}">0</td>
+                    <td style="min-width:160px">
+                        <div class="progress-row">
+                            <div class="progress" style="flex:1" th:classappend="${i.percent < 40} ? 'danger' : 'warn'">
+                                <span th:style="'width:' + ${i.percent} + '%'"></span>
+                            </div>
+                            <span class="pct" th:text="${i.percent} + '%'">0%</span>
+                        </div>
+                    </td>
+                    <td class="num"><span class="badge badge-orange plain" th:text="${#numbers.formatInteger(i.shortage, 1, 'WHITESPACE')} + ' ' + ${i.product().unit}">0</span></td>
+                    <td class="num">
+                        <a class="btn btn-primary btn-sm" sec:authorize="hasAnyRole('ADMIN','MANAGER')"
+                           th:href="@{/orders/new(productId=${i.product().id}, qty=${i.shortage})}"><i class="bi bi-cart-plus"></i> Заказать</a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="empty" th:if="${items.isEmpty()}"><i class="bi bi-check2-circle"></i>Дефицита нет — все остатки в норме</div>
+    </div>
+</div>
+<div id="scripts"></div>
+</body>
+</html>

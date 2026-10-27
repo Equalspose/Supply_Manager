@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Вход — Управление поставками</title>
+    <link rel="icon" th:href="@{/img/favicon.svg}" type="image/svg+xml">
+    <link rel="stylesheet" th:href="@{/vendor/inter/inter.css}">
+    <link rel="stylesheet" th:href="@{/vendor/bootstrap-icons/bootstrap-icons.min.css}">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div class="auth">
+    <section class="auth-art">
+        <div class="brand" style="padding:0">
+            <span class="brand-mark"><i class="bi bi-box-seam"></i></span>
+            <span>
+                <span class="brand-title" style="display:block">Ростелеком</span>
+                <span class="brand-sub" style="display:block">Управление поставками</span>
+            </span>
+        </div>
+        <div>
+            <h1>Закупки и склад в одном окне</h1>
+            <p>Заказы поставщикам, приёмка оборудования, остатки на региональных складах и аналитика закупок.</p>
+            <div class="features">
+                <div class="feature"><i class="bi bi-receipt"></i> Согласование и контроль исполнения заказов</div>
+                <div class="feature"><i class="bi bi-truck"></i> Приёмка поставок с автоматическим оприходованием</div>
+                <div class="feature"><i class="bi bi-graph-up-arrow"></i> Аналитика расходов и дефицита материалов</div>
+            </div>
+        </div>
+        <small style="color:rgba(255,255,255,.5)">Учебный проект · Spring Boot · PostgreSQL</small>
+    </section>
+
+    <section class="auth-form">
+        <div class="box">
+            <h2>Добро пожаловать</h2>
+            <div class="sub">Войдите, чтобы продолжить работу</div>
+
+            <div class="alert alert-error" th:if="${param.error}">
+                <i class="bi bi-exclamation-octagon-fill"></i> Неверный логин или пароль
+            </div>
+            <div class="alert alert-info" th:if="${param.logout}">
+                <i class="bi bi-info-circle-fill"></i> Вы вышли из системы
+            </div>
+
+            <form th:action="@{/login}" method="post">
+                <div class="field">
+                    <label for="username">Логин</label>
+                    <input class="input" id="username" name="username" autocomplete="username" autofocus required>
+                </div>
+                <div class="field">
+                    <label for="password">Пароль</label>
+                    <input class="input" id="password" name="password" type="password" autocomplete="current-password" required>
+                </div>
+                <button class="btn btn-primary" type="submit">Войти <i class="bi bi-arrow-right"></i></button>
+            </form>
+
+            <div class="demo-users">
+                <b>Демо-доступ</b> — нажмите, чтобы подставить:<br>
+                <button type="button" data-u="admin">admin · Администратор</button>
+                <button type="button" data-u="manager">manager · Менеджер</button>
+                <button type="button" data-u="store">store · Кладовщик</button>
+            </div>
+        </div>
+    </section>
+</div>
+<script>
+    document.querySelectorAll('.demo-users button').forEach(b => b.addEventListener('click', () => {
+        document.getElementById('username').value = b.dataset.u;
+        document.getElementById('password').value = b.dataset.u;
+    }));
+</script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ошибка</title>
+    <link rel="stylesheet" th:href="@{/vendor/inter/inter.css}">
+    <link rel="stylesheet" th:href="@{/vendor/bootstrap-icons/bootstrap-icons.min.css}">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div class="error-page">
+    <div>
+        <div class="code" th:text="${status}">500</div>
+        <h2 style="margin:12px 0 8px" th:text="${status == 404} ? 'Страница не найдена' : 'Что-то пошло не так'">Ошибка</h2>
+        <p class="muted" th:text="${status == 404} ? 'Запрошенная запись не существует или была удалена.' : 'Попробуйте повторить действие позже.'"></p>
+        <a class="btn btn-primary" th:href="@{/}"><i class="bi bi-house"></i> На главную</a>
+    </div>
+</div>
+</body>
+</html>

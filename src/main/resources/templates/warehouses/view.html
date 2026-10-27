@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#content}, ~{::#scripts})}">
+<head><title>Склад</title></head>
+<body>
+<div id="content">
+    <a class="back-link" th:href="@{/warehouses}"><i class="bi bi-arrow-left"></i> Все склады</a>
+    <div class="page-head">
+        <div>
+            <h1><span class="chip" style="font-size:16px" th:text="${warehouse.code}">MSK</span> <span th:text="${warehouse.name}">Склад</span></h1>
+            <div class="sub"><i class="bi bi-geo-alt"></i> <span th:text="${warehouse.address}"></span> · ответственный: <span th:text="${warehouse.manager ?: '—'}"></span></div>
+        </div>
+        <div class="page-actions" sec:authorize="hasRole('ADMIN')">
+            <form th:action="@{/warehouses/{id}/delete(id=${warehouse.id})}" method="post" data-confirm="Удалить склад?">
+                <button class="btn btn-danger-light" type="submit"><i class="bi bi-trash3"></i> Удалить</button>
+            </form>
+            <a class="btn btn-light" th:href="@{/warehouses/{id}/edit(id=${warehouse.id})}"><i class="bi bi-pencil"></i> Изменить</a>
+        </div>
+    </div>
+    <div class="grid grid-3 mb">
+        <div class="card kpi tone-violet">
+            <div class="kpi-icon"><i class="bi bi-boxes"></i></div>
+            <div class="kpi-label">Единиц на складе</div>
+            <div class="kpi-value" th:text="${#numbers.formatInteger(totalQuantity, 1, 'WHITESPACE')}">0</div>
+        </div>
+        <div class="card kpi tone-blue">
+            <div class="kpi-icon"><i class="bi bi-rulers"></i></div>
+            <div class="kpi-label">Вместимость</div>
+            <div class="kpi-value" th:text="${#numbers.formatInteger(warehouse.capacity, 1, 'WHITESPACE')}">0</div>
+        </div>
+        <div class="card kpi tone-orange">
+            <div class="kpi-icon"><i class="bi bi-cpu"></i></div>
+            <div class="kpi-label">Позиций в наличии</div>
+            <div class="kpi-value" th:text="${stock.?[quantity > 0].size()}">0</div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-head"><h3>Остатки на складе</h3></div>
+        <div class="table-wrap">
+            <table class="table">
+                <thead><tr><th>Артикул</th><th>Товар</th><th>Категория</th><th class="num">Количество</th><th class="num">Стоимость</th></tr></thead>
+                <tbody>
+                <tr th:each="s : ${stock}">
+                    <td><span class="chip" th:text="${s.product.sku}">SKU</span></td>
+                    <td class="cell-title" th:text="${s.product.name}">Товар</td>
+                    <td class="muted" th:text="${s.product.category.name}">Категория</td>
+                    <td class="num strong" th:text="${#numbers.formatInteger(s.quantity, 1, 'WHITESPACE')} + ' ' + ${s.product.unit}">0</td>
+                    <td class="num" th:text="${#numbers.formatDecimal(s.product.price * s.quantity, 1, 'WHITESPACE', 2, 'COMMA')} + ' ₽'">0</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<div id="scripts"></div>
+</body>
+</html>

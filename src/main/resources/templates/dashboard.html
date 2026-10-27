@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#content}, ~{::#scripts})}">
+<head><title>Главная — Управление поставками</title></head>
+<body>
+<div id="content">
+
+    <section class="hero">
+        <div>
+            <h1 th:text="'Здравствуйте, ' + ${currentUser != null ? #strings.arraySplit(currentUser.fullName, ' ')[1] : ''} + '!'">Здравствуйте!</h1>
+            <p>
+                В работе <b th:text="${stats.activeOrders()}">0</b> заказов поставщикам,
+                <b th:text="${stats.overdueOrders()}">0</b> из них просрочено.
+                Позиций ниже минимального остатка: <b th:text="${stats.lowStockCount()}">0</b>.
+            </p>
+        </div>
+        <div class="page-actions">
+            <a class="btn btn-light" th:href="@{/deliveries/new}" sec:authorize="hasAnyRole('ADMIN','STOREKEEPER')"><i class="bi bi-box-arrow-in-down"></i> Принять поставку</a>
+            <a class="btn btn-accent" th:href="@{/orders/new}" sec:authorize="hasAnyRole('ADMIN','MANAGER')"><i class="bi bi-plus-lg"></i> Новый заказ</a>
+        </div>
+    </section>
+
+    <div class="grid grid-4 mb">
+        <div class="card kpi tone-violet">
+            <div class="kpi-icon"><i class="bi bi-wallet2"></i></div>
+            <div class="kpi-label">Закуплено с начала года</div>
+            <div class="kpi-value">
+                <span th:text="${#numbers.formatDecimal(stats.spentThisYear() / 1000000, 1, 'WHITESPACE', 1, 'COMMA')}">0</span>
+                <small>млн ₽</small>
+            </div>
+            <div class="kpi-foot"><i class="bi bi-info-circle"></i> без учёта отменённых заказов</div>
+        </div>
+        <div class="card kpi tone-orange">
+            <div class="kpi-icon"><i class="bi bi-receipt"></i></div>
+            <div class="kpi-label">Активные заказы</div>
+            <div class="kpi-value" th:text="${stats.activeOrders()}">0</div>
+            <div class="kpi-foot">
+                <span class="badge badge-red" th:if="${stats.overdueOrders() > 0}" th:text="${stats.overdueOrders()} + ' просрочено'">0</span>
+                <span th:unless="${stats.overdueOrders() > 0}">просроченных нет</span>
+            </div>
+        </div>
+        <div class="card kpi tone-green">
+            <div class="kpi-icon"><i class="bi bi-truck"></i></div>
+            <div class="kpi-label">Поставок в этом месяце</div>
+            <div class="kpi-value" th:text="${stats.deliveriesThisMonth()}">0</div>
+            <div class="kpi-foot"><i class="bi bi-buildings"></i> <span th:text="${stats.warehouses()} + ' складов в сети'">складов</span></div>
+        </div>
+        <div class="card kpi tone-blue">
+            <div class="kpi-icon"><i class="bi bi-boxes"></i></div>
+            <div class="kpi-label">Стоимость запасов</div>
+            <div class="kpi-value">
+                <span th:text="${#numbers.formatDecimal(stats.stockValue() / 1000000, 1, 'WHITESPACE', 1, 'COMMA')}">0</span>
+                <small>млн ₽</small>
+            </div>
+            <div class="kpi-foot"><i class="bi bi-cpu"></i> <span th:text="${stats.products()} + ' позиций номенклатуры'">позиций</span></div>
+        </div>
+    </div>
+
+    <div class="grid grid-main mb">
+        <div class="card">
+            <div class="card-head">
+                <h3>Динамика закупок</h3>
+                <span class="hint">за последние 12 месяцев, млн ₽</span>
+            </div>
+            <div class="card-body"><div class="chart-box"><canvas id="monthlyChart"></canvas></div></div>
+        </div>
+        <div class="card">
+            <div class="card-head"><h3>Заказы по статусам</h3></div>
+            <div class="card-body"><div class="chart-box"><canvas id="statusChart"></canvas></div></div>
+        </div>
+    </div>
+
+    <div class="grid grid-main mb">
+        <div class="card">
+            <div class="card-head">
+                <h3>Последние заказы</h3>
+                <a class="btn btn-ghost btn-sm" th:href="@{/orders}">Все заказы <i class="bi bi-arrow-right"></i></a>
+            </div>
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
+                    <tr><th>Номер</th><th>Поставщик</th><th>Статус</th><th class="num">Сумма</th></tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="o : ${recentOrders}" class="clickable" th:data-href="@{/orders/{id}(id=${o.id})}">
+                        <td>
+                            <div class="cell-title" th:text="${o.number}">ЗП</div>
+                            <div class="cell-sub" th:text="${#temporals.format(o.orderDate, 'dd.MM.yyyy')}">дата</div>
+                        </td>
+                        <td th:text="${o.supplier.name}">Поставщик</td>
+                        <td><span th:replace="~{fragments/ui :: orderStatus(${o.status})}"></span></td>
+                        <td class="num strong" th:text="${#numbers.formatDecimal(o.totalAmount, 1, 'WHITESPACE', 2, 'COMMA')} + ' ₽'">0</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-head">
+                <h3>Крупнейшие поставщики</h3>
+            </div>
+            <div class="card-body"><div class="chart-box sm"><canvas id="supplierChart"></canvas></div></div>
+        </div>
+    </div>
+
+    <div class="grid grid-2">
+        <div class="card">
+            <div class="card-head">
+                <h3><i class="bi bi-exclamation-triangle" style="color:var(--orange)"></i> Дефицит материалов</h3>
+                <a class="btn btn-ghost btn-sm" th:href="@{/stock/low}">Подробнее <i class="bi bi-arrow-right"></i></a>
+            </div>
+            <ul class="list" th:if="${!lowStock.isEmpty()}">
+                <li th:each="item : ${lowStock}">
+                    <div class="icon-circle" style="background:var(--orange-50);color:var(--orange)"><i class="bi bi-box"></i></div>
+                    <div class="grow">
+                        <div class="cell-title" th:text="${item.product().name}">Товар</div>
+                        <div class="progress-row" style="margin-top:6px">
+                            <div class="progress" style="flex:1" th:classappend="${item.percent < 40} ? 'danger' : 'warn'">
+                                <span th:style="'width:' + ${item.percent} + '%'"></span>
+                            </div>
+                            <span class="pct" th:text="${item.total()} + ' / ' + ${item.product().minStock}">0</span>
+                        </div>
+                    </div>
+                    <a class="btn btn-light btn-sm" sec:authorize="hasAnyRole('ADMIN','MANAGER')"
+                       th:href="@{/orders/new(productId=${item.product().id}, qty=${item.shortage})}">Заказать</a>
+                </li>
+            </ul>
+            <div class="empty" th:if="${lowStock.isEmpty()}"><i class="bi bi-check2-circle"></i>Все остатки в норме</div>
+        </div>
+
+        <div class="card">
+            <div class="card-head">
+                <h3><i class="bi bi-hourglass-split" style="color:var(--violet)"></i> Ожидают поставки</h3>
+                <a class="btn btn-ghost btn-sm" th:href="@{/deliveries}">Все поставки <i class="bi bi-arrow-right"></i></a>
+            </div>
+            <ul class="list" th:if="${!awaiting.isEmpty()}">
+                <li th:each="o : ${awaiting}">
+                    <div class="icon-circle" th:style="${o.overdue} ? 'background:var(--red-50);color:var(--red)' : 'background:var(--violet-50);color:var(--violet)'">
+                        <i class="bi bi-truck"></i>
+                    </div>
+                    <div class="grow">
+                        <a class="cell-title" th:href="@{/orders/{id}(id=${o.id})}" th:text="${o.number}">ЗП</a>
+                        <div class="cell-sub">
+                            <span th:text="${o.supplier.name}">Поставщик</span> ·
+                            <span th:classappend="${o.overdue} ? 'badge badge-red plain'"
+                                  th:text="'до ' + ${#temporals.format(o.expectedDate, 'dd.MM.yyyy')}">дата</span>
+                        </div>
+                    </div>
+                    <div class="progress-row" style="width:120px">
+                        <div class="progress" style="flex:1"><span th:style="'width:' + ${o.progress} + '%'"></span></div>
+                        <span class="pct" th:text="${o.progress} + '%'">0%</span>
+                    </div>
+                </li>
+            </ul>
+            <div class="empty" th:if="${awaiting.isEmpty()}"><i class="bi bi-inbox"></i>Нет заказов в пути</div>
+        </div>
+    </div>
+</div>
+
+<div id="scripts">
+    <script th:src="@{/vendor/chartjs/chart.umd.min.js}"></script>
+    <script th:inline="javascript">
+        const palette = {gray: '#98a2b3', blue: '#2e90fa', violet: '#7700ff', orange: '#ff4f12', green: '#12b76a', red: '#f04438'};
+        const months = /*[[${stats.monthLabels()}]]*/ [];
+        const amounts = /*[[${stats.monthAmounts()}]]*/ [];
+        const counts = /*[[${stats.monthCounts()}]]*/ [];
+        const statusLabels = /*[[${stats.statusLabels()}]]*/ [];
+        const statusCounts = /*[[${stats.statusCounts()}]]*/ [];
+        const statusColors = /*[[${stats.statusColors()}]]*/ [];
+        const topNames = /*[[${stats.topSupplierNames()}]]*/ [];
+        const topAmounts = /*[[${stats.topSupplierAmounts()}]]*/ [];
+
+        Chart.defaults.font.family = 'Inter, sans-serif';
+        Chart.defaults.color = '#667085';
+        Chart.defaults.plugins.legend.labels.usePointStyle = true;
+        const rub = v => new Intl.NumberFormat('ru-RU', {maximumFractionDigits: 0}).format(v) + ' ₽';
+
+        const ctx = document.getElementById('monthlyChart').getContext('2d');
+        const grad = ctx.createLinearGradient(0, 0, 0, 300);
+        grad.addColorStop(0, 'rgba(119, 0, 255, .9)');
+        grad.addColorStop(1, 'rgba(162, 89, 255, .35)');
+        new Chart(ctx, {
+            data: {
+                labels: months,
+                datasets: [
+                    {type: 'bar', label: 'Сумма закупок', data: amounts.map(a => a / 1e6), backgroundColor: grad,
+                     borderRadius: 8, maxBarThickness: 34, yAxisID: 'y', order: 2},
+                    {type: 'line', label: 'Количество заказов', data: counts, borderColor: palette.orange,
+                     backgroundColor: palette.orange, tension: .35, pointRadius: 4, pointHoverRadius: 6, yAxisID: 'y1', order: 1}
+                ]
+            },
+            options: {
+                maintainAspectRatio: false,
+                interaction: {mode: 'index', intersect: false},
+                plugins: {
+                    legend: {position: 'bottom'},
+                    tooltip: {callbacks: {label: c => c.dataset.yAxisID === 'y'
+                                ? ' ' + rub(amounts[c.dataIndex]) : ' Заказов: ' + c.raw}}
+                },
+                scales: {
+                    x: {grid: {display: false}},
+                    y: {beginAtZero: true, grid: {color: '#f2f4f7'}, ticks: {callback: v => v + ' млн'}},
+                    y1: {beginAtZero: true, position: 'right', grid: {display: false}, ticks: {precision: 0}}
+                }
+            }
+        });
+
+        new Chart(document.getElementById('statusChart'), {
+            type: 'doughnut',
+            data: {labels: statusLabels, datasets: [{data: statusCounts, backgroundColor: statusColors.map(c => palette[c]),
+                    borderWidth: 3, borderColor: '#fff', hoverOffset: 6}]},
+            options: {maintainAspectRatio: false, cutout: '68%', plugins: {legend: {position: 'bottom'}}}
+        });
+
+        new Chart(document.getElementById('supplierChart'), {
+            type: 'bar',
+            data: {labels: topNames.map(n => n.replace(/^(ООО|АО|ПАО)\s+/, '')), datasets: [{data: topAmounts.map(a => a / 1e6),
+                    backgroundColor: ['#7700ff', '#8f2bff', '#a259ff', '#ff4f12', '#ff8a5c'], borderRadius: 6, maxBarThickness: 22}]},
+            options: {
+                indexAxis: 'y', maintainAspectRatio: false,
+                plugins: {legend: {display: false}, tooltip: {callbacks: {label: c => ' ' + rub(topAmounts[c.dataIndex])}}},
+                scales: {x: {grid: {color: '#f2f4f7'}, ticks: {callback: v => v + ' млн'}}, y: {grid: {display: false}}}
+            }
+        });
+    </script>
+</div>
+</body>
+</html>

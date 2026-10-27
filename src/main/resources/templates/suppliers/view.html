@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#content}, ~{::#scripts})}">
+<head><title>Поставщик</title></head>
+<body>
+<div id="content">
+    <a class="back-link" th:href="@{/suppliers}"><i class="bi bi-arrow-left"></i> Все поставщики</a>
+    <div class="page-head">
+        <div>
+            <h1>
+                <span th:text="${supplier.name}">Поставщик</span>
+                <span class="badge badge-green" th:if="${supplier.active}">Активен</span>
+                <span class="badge badge-gray" th:unless="${supplier.active}">Неактивен</span>
+            </h1>
+            <div class="sub"><span th:replace="~{fragments/ui :: stars(${supplier.rating})}"></span> рейтинг <b th:text="${supplier.rating}"></b> из 5</div>
+        </div>
+        <div class="page-actions" sec:authorize="hasAnyRole('ADMIN','MANAGER')">
+            <form th:action="@{/suppliers/{id}/delete(id=${supplier.id})}" method="post" data-confirm="Удалить поставщика?">
+                <button class="btn btn-danger-light" type="submit"><i class="bi bi-trash3"></i> Удалить</button>
+            </form>
+            <a class="btn btn-light" th:href="@{/suppliers/{id}/edit(id=${supplier.id})}"><i class="bi bi-pencil"></i> Изменить</a>
+            <a class="btn btn-primary" th:if="${supplier.active}" th:href="@{/orders/new}"><i class="bi bi-plus-lg"></i> Заказ</a>
+        </div>
+    </div>
+
+    <div class="grid grid-3 mb">
+        <div class="card kpi tone-violet">
+            <div class="kpi-icon"><i class="bi bi-wallet2"></i></div>
+            <div class="kpi-label">Объём закупок</div>
+            <div class="kpi-value"><span th:text="${#numbers.formatDecimal(totalAmount / 1000000, 1, 'WHITESPACE', 2, 'COMMA')}">0</span> <small>млн ₽</small></div>
+        </div>
+        <div class="card kpi tone-orange">
+            <div class="kpi-icon"><i class="bi bi-receipt"></i></div>
+            <div class="kpi-label">Всего заказов</div>
+            <div class="kpi-value" th:text="${orders.size()}">0</div>
+        </div>
+        <div class="card kpi tone-green">
+            <div class="kpi-icon"><i class="bi bi-check2-circle"></i></div>
+            <div class="kpi-label">Исполнено</div>
+            <div class="kpi-value" th:text="${orders.?[status.name() == 'DELIVERED'].size()}">0</div>
+        </div>
+    </div>
+
+    <div class="grid grid-main">
+        <div class="card">
+            <div class="card-head"><h3>История заказов</h3></div>
+            <div class="table-wrap" th:if="${!orders.isEmpty()}">
+                <table class="table">
+                    <thead><tr><th>Номер</th><th>Дата</th><th>Склад</th><th>Статус</th><th class="num">Сумма</th></tr></thead>
+                    <tbody>
+                    <tr th:each="o : ${orders}" class="clickable" th:data-href="@{/orders/{id}(id=${o.id})}">
+                        <td><a class="cell-title" th:href="@{/orders/{id}(id=${o.id})}" th:text="${o.number}">ЗП</a></td>
+                        <td th:text="${#temporals.format(o.orderDate, 'dd.MM.yyyy')}">дата</td>
+                        <td><span class="chip" th:text="${o.warehouse.code}">MSK</span></td>
+                        <td><span th:replace="~{fragments/ui :: orderStatus(${o.status})}"></span></td>
+                        <td class="num strong" th:text="${#numbers.formatDecimal(o.totalAmount, 1, 'WHITESPACE', 2, 'COMMA')} + ' ₽'">0</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="empty" th:if="${orders.isEmpty()}"><i class="bi bi-receipt"></i>Заказов пока нет</div>
+        </div>
+        <div class="card">
+            <div class="card-head"><h3>Реквизиты</h3></div>
+            <div class="card-body">
+                <dl class="dl" style="grid-template-columns:110px 1fr">
+                    <dt>ИНН</dt><dd th:text="${supplier.inn}"></dd>
+                    <dt>КПП</dt><dd th:text="${supplier.kpp ?: '—'}"></dd>
+                    <dt>Адрес</dt><dd th:text="${supplier.address ?: '—'}"></dd>
+                    <dt>Контакт</dt><dd th:text="${supplier.contactPerson ?: '—'}"></dd>
+                    <dt>Телефон</dt><dd th:text="${supplier.phone ?: '—'}"></dd>
+                    <dt>E-mail</dt><dd><a th:href="'mailto:' + ${supplier.email}" th:text="${supplier.email}"></a></dd>
+                    <dt>В системе с</dt><dd th:text="${#temporals.format(supplier.createdAt, 'dd.MM.yyyy')}"></dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="scripts"></div>
+</body>
+</html>

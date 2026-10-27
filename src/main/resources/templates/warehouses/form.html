@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#content}, ~{::#scripts})}">
+<head><title>Склад</title></head>
+<body>
+<div id="content">
+    <a class="back-link" th:href="@{/warehouses}"><i class="bi bi-arrow-left"></i> Склады</a>
+    <div class="page-head">
+        <h1 th:text="${warehouse.id == null} ? 'Новый склад' : 'Редактирование: ' + ${warehouse.name}">Склад</h1>
+    </div>
+    <form class="card" th:action="@{/warehouses}" th:object="${warehouse}" method="post" style="max-width:900px">
+        <input type="hidden" th:field="*{id}">
+        <div class="card-body">
+            <div class="form-grid">
+                <div class="field">
+                    <label>Код <span class="req">*</span></label>
+                    <input class="input" th:field="*{code}" th:errorclass="is-invalid" placeholder="MSK-02">
+                    <div class="error" th:errors="*{code}"></div>
+                </div>
+                <div class="field">
+                    <label>Макрорегион <span class="req">*</span></label>
+                    <input class="input" th:field="*{region}" th:errorclass="is-invalid" list="regions">
+                    <datalist id="regions"><option value="Центр"><option value="Северо-Запад"><option value="Волга"><option value="Юг"><option value="Урал"><option value="Сибирь"><option value="Дальний Восток"></datalist>
+                    <div class="error" th:errors="*{region}"></div>
+                </div>
+                <div class="field full">
+                    <label>Наименование <span class="req">*</span></label>
+                    <input class="input" th:field="*{name}" th:errorclass="is-invalid">
+                    <div class="error" th:errors="*{name}"></div>
+                </div>
+                <div class="field full">
+                    <label>Адрес <span class="req">*</span></label>
+                    <input class="input" th:field="*{address}" th:errorclass="is-invalid">
+                    <div class="error" th:errors="*{address}"></div>
+                </div>
+                <div class="field">
+                    <label>Ответственный</label>
+                    <input class="input" th:field="*{manager}">
+                </div>
+                <div class="field">
+                    <label>Вместимость, ед. <span class="req">*</span></label>
+                    <input class="input" type="number" min="1" th:field="*{capacity}" th:errorclass="is-invalid">
+                    <div class="error" th:errors="*{capacity}"></div>
+                </div>
+            </div>
+        </div>
+        <div class="form-actions">
+            <a class="btn btn-light" th:href="@{/warehouses}">Отмена</a>
+            <button class="btn btn-primary" type="submit"><i class="bi bi-check2"></i> Сохранить</button>
+        </div>
+    </form>
+</div>
+<div id="scripts"></div>
+</body>
+</html>

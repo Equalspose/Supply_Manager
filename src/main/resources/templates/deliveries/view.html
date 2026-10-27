@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#content}, ~{::#scripts})}">
+<head><title>Поставка</title></head>
+<body>
+<div id="content">
+    <a class="back-link" th:href="@{/deliveries}"><i class="bi bi-arrow-left"></i> Все поставки</a>
+    <div class="page-head">
+        <div>
+            <h1>
+                <span th:text="'Поставка ' + ${delivery.number}">Поставка</span>
+                <span class="badge" th:classappend="'badge-' + ${delivery.status.color}" th:text="${delivery.status.title}">ok</span>
+            </h1>
+            <div class="sub">
+                <span th:text="${#temporals.format(delivery.deliveryDate, 'dd MMMM yyyy')}">дата</span> ·
+                принял <span th:text="${delivery.receivedBy}">admin</span>
+            </div>
+        </div>
+        <div class="page-actions">
+            <button class="btn btn-light" type="button" onclick="window.print()"><i class="bi bi-printer"></i> Печать</button>
+            <a class="btn btn-light" th:href="@{/orders/{id}(id=${delivery.order.id})}"><i class="bi bi-receipt"></i> Заказ</a>
+        </div>
+    </div>
+
+    <div class="grid grid-main">
+        <div class="card">
+            <div class="card-head"><h3>Принятый товар</h3></div>
+            <div class="table-wrap">
+                <table class="table">
+                    <thead><tr><th>№</th><th>Товар</th><th class="num">Принято</th><th class="num">Цена</th><th class="num">Сумма</th></tr></thead>
+                    <tbody>
+                    <tr th:each="i, s : ${delivery.items}">
+                        <td class="muted" th:text="${s.count}">1</td>
+                        <td>
+                            <div class="cell-title" th:text="${i.orderItem.product.name}">Товар</div>
+                            <div class="cell-sub"><span class="chip" th:text="${i.orderItem.product.sku}">SKU</span></div>
+                        </td>
+                        <td class="num strong" th:text="${i.quantity} + ' ' + ${i.orderItem.product.unit}">0</td>
+                        <td class="num" th:text="${#numbers.formatDecimal(i.orderItem.unitPrice, 1, 'WHITESPACE', 2, 'COMMA')}">0</td>
+                        <td class="num" th:text="${#numbers.formatDecimal(i.orderItem.unitPrice * i.quantity, 1, 'WHITESPACE', 2, 'COMMA')}">0</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-head"><h3>Документы</h3></div>
+            <div class="card-body">
+                <dl class="dl" style="grid-template-columns:120px 1fr">
+                    <dt>Заказ</dt>
+                    <dd><a th:href="@{/orders/{id}(id=${delivery.order.id})}" th:text="${delivery.order.number}">ЗП</a></dd>
+                    <dt>Поставщик</dt>
+                    <dd th:text="${delivery.order.supplier.name}">Поставщик</dd>
+                    <dt>Склад</dt>
+                    <dd th:text="${delivery.order.warehouse.name}">Склад</dd>
+                    <dt>Накладная</dt>
+                    <dd th:text="${delivery.waybill ?: '—'}">—</dd>
+                    <dt>Перевозчик</dt>
+                    <dd th:text="${delivery.carrier ?: '—'}">—</dd>
+                    <dt>Замечания</dt>
+                    <dd th:text="${delivery.comment ?: '—'}">—</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="scripts"></div>
+</body>
+</html>

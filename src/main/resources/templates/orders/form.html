@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#content}, ~{::#scripts})}">
+<head><title>Заказ поставщику</title></head>
+<body>
+<div id="content">
+    <a class="back-link" th:href="${order != null} ? @{/orders/{id}(id=${order.id})} : @{/orders}"><i class="bi bi-arrow-left"></i> Назад</a>
+    <div class="page-head">
+        <div>
+            <h1 th:text="${order != null} ? 'Редактирование заказа ' + ${order.number} : 'Новый заказ поставщику'">Новый заказ</h1>
+            <div class="sub">Заполните реквизиты и позиции заказа. После сохранения заказ получит статус «Черновик».</div>
+        </div>
+    </div>
+
+    <form th:action="${order != null} ? @{/orders/{id}(id=${order.id})} : @{/orders}" th:object="${form}" method="post">
+        <div class="card mb">
+            <div class="card-head"><h3>Реквизиты</h3></div>
+            <div class="card-body">
+                <div class="form-grid">
+                    <div class="field">
+                        <label>Поставщик <span class="req">*</span></label>
+                        <select class="input" th:field="*{supplierId}" th:classappend="${#fields.hasErrors('supplierId')} ? 'is-invalid'">
+                            <option value="">— выберите поставщика —</option>
+                            <option th:each="s : ${suppliers}" th:value="${s.id}" th:text="${s.name + ' (ИНН ' + s.inn + ')'}"></option>
+                        </select>
+                        <div class="error" th:errors="*{supplierId}"></div>
+                    </div>
+                    <div class="field">
+                        <label>Склад получения <span class="req">*</span></label>
+                        <select class="input" th:field="*{warehouseId}" th:classappend="${#fields.hasErrors('warehouseId')} ? 'is-invalid'">
+                            <option value="">— выберите склад —</option>
+                            <option th:each="w : ${warehouses}" th:value="${w.id}" th:text="${w.code + ' · ' + w.name}"></option>
+                        </select>
+                        <div class="error" th:errors="*{warehouseId}"></div>
+                    </div>
+                    <div class="field">
+                        <label>Ожидаемая дата поставки</label>
+                        <input class="input" type="date" th:field="*{expectedDate}">
+                        <div class="help">По умолчанию — через 14 дней</div>
+                    </div>
+                    <div class="field">
+                        <label>Комментарий</label>
+                        <input class="input" th:field="*{comment}" maxlength="500" placeholder="Например: для модернизации сети GPON в Подмосковье">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-head">
+                <h3>Позиции заказа</h3>
+                <button class="btn btn-light btn-sm" type="button" id="add-row"><i class="bi bi-plus-lg"></i> Добавить позицию</button>
+            </div>
+            <div class="table-wrap">
+                <table class="table items-table">
+                    <thead>
+                    <tr>
+                        <th style="width:40px">№</th>
+                        <th>Товар</th>
+                        <th style="width:150px">Количество</th>
+                        <th style="width:170px">Цена за ед., ₽</th>
+                        <th class="num" style="width:160px">Сумма</th>
+                        <th style="width:50px"></th>
+                    </tr>
+                    </thead>
+                    <tbody id="items-body">
+                    <tr th:each="item, st : *{items}">
+                        <td class="row-num muted" th:text="${st.count}">1</td>
+                        <td>
+                            <select class="input" data-name="productId" th:name="|items[${st.index}].productId|"
+                                    th:classappend="${#fields.hasErrors('items[__${st.index}__].productId')} ? 'is-invalid'">
+                                <option value="">— выберите товар —</option>
+                                <option th:each="p : ${products}" th:value="${p.id}" th:text="${p.sku + ' · ' + p.name}"
+                                        th:data-price="${p.price}" th:data-unit="${p.unit}"
+                                        th:selected="${p.id == item.productId}"></option>
+                            </select>
+                        </td>
+                        <td>
+                            <div class="progress-row">
+                                <input class="input" type="number" min="1" data-name="quantity"
+                                       th:name="|items[${st.index}].quantity|" th:value="${item.quantity}"
+                                       th:classappend="${#fields.hasErrors('items[__${st.index}__].quantity')} ? 'is-invalid'">
+                                <span class="row-unit muted"></span>
+                            </div>
+                        </td>
+                        <td>
+                            <input class="input" type="number" min="0" step="0.01" data-name="unitPrice"
+                                   th:name="|items[${st.index}].unitPrice|" th:value="${item.unitPrice}"
+                                   th:classappend="${#fields.hasErrors('items[__${st.index}__].unitPrice')} ? 'is-invalid'">
+                        </td>
+                        <td class="num strong row-amount">0</td>
+                        <td><button class="btn btn-ghost btn-icon remove-row" type="button" title="Удалить"><i class="bi bi-trash3"></i></button></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="items-summary">
+                <span class="muted"><i class="bi bi-info-circle"></i> Цена подставляется из справочника и может быть изменена</span>
+                <div class="total"><span>Итого:</span><b id="order-total">0 ₽</b></div>
+            </div>
+            <div class="form-actions">
+                <a class="btn btn-light" th:href="${order != null} ? @{/orders/{id}(id=${order.id})} : @{/orders}">Отмена</a>
+                <button class="btn btn-primary" type="submit"><i class="bi bi-check2"></i> Сохранить заказ</button>
+            </div>
+        </div>
+    </form>
+
+    <template id="item-template">
+        <tr>
+            <td class="row-num muted">1</td>
+            <td>
+                <select class="input" data-name="productId">
+                    <option value="">— выберите товар —</option>
+                    <option th:each="p : ${products}" th:value="${p.id}" th:text="${p.sku + ' · ' + p.name}"
+                            th:data-price="${p.price}" th:data-unit="${p.unit}"></option>
+                </select>
+            </td>
+            <td>
+                <div class="progress-row">
+                    <input class="input" type="number" min="1" data-name="quantity">
+                    <span class="row-unit muted"></span>
+                </div>
+            </td>
+            <td><input class="input" type="number" min="0" step="0.01" data-name="unitPrice"></td>
+            <td class="num strong row-amount">0</td>
+            <td><button class="btn btn-ghost btn-icon remove-row" type="button" title="Удалить"><i class="bi bi-trash3"></i></button></td>
+        </tr>
+    </template>
+</div>
+<div id="scripts">
+    <script th:src="@{/js/order-form.js}"></script>
+</div>
+</body>
+</html>

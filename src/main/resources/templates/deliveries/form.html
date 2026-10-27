@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#content}, ~{::#scripts})}">
+<head><title>Приёмка поставки</title></head>
+<body>
+<div id="content">
+    <a class="back-link" th:href="@{/orders/{id}(id=${order.id})}"><i class="bi bi-arrow-left"></i> К заказу</a>
+    <div class="page-head">
+        <div>
+            <h1 th:text="'Приёмка по заказу ' + ${order.number}">Приёмка</h1>
+            <div class="sub">
+                <span th:text="${order.supplier.name}"></span> → <span th:text="${order.warehouse.name}"></span>.
+                Укажите фактически принятое количество — остатки склада обновятся автоматически.
+            </div>
+        </div>
+    </div>
+
+    <form th:action="@{/deliveries}" th:object="${form}" method="post">
+        <input type="hidden" th:field="*{orderId}">
+        <div class="card mb">
+            <div class="card-head"><h3>Документы</h3></div>
+            <div class="card-body">
+                <div class="form-grid">
+                    <div class="field">
+                        <label>Дата поставки <span class="req">*</span></label>
+                        <input class="input" type="date" th:field="*{deliveryDate}" th:classappend="${#fields.hasErrors('deliveryDate')} ? 'is-invalid'">
+                        <div class="error" th:errors="*{deliveryDate}"></div>
+                    </div>
+                    <div class="field">
+                        <label>Результат приёмки</label>
+                        <select class="input" th:field="*{status}">
+                            <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.title}"></option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Товарная накладная №</label>
+                        <input class="input" th:field="*{waybill}" placeholder="ТН-000000">
+                    </div>
+                    <div class="field">
+                        <label>Перевозчик</label>
+                        <input class="input" th:field="*{carrier}" list="carriers" placeholder="Транспортная компания">
+                        <datalist id="carriers">
+                            <option value="ПЭК"><option value="Деловые Линии"><option value="СДЭК"><option value="Собственный транспорт поставщика">
+                        </datalist>
+                    </div>
+                    <div class="field full">
+                        <label>Замечания при приёмке</label>
+                        <textarea class="input" th:field="*{comment}" placeholder="Повреждения упаковки, недостача и т.п."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-head"><h3>Принимаемые позиции</h3></div>
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
+                    <tr><th>Товар</th><th class="num">Заказано</th><th class="num">Принято ранее</th><th class="num">Осталось</th><th style="width:180px">Принять сейчас</th></tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="line, st : *{lines}" th:with="item=${order.items.?[id == __${line.orderItemId}__][0]}">
+                        <td>
+                            <input type="hidden" th:field="*{lines[__${st.index}__].orderItemId}">
+                            <div class="cell-title" th:text="${item.product.name}">Товар</div>
+                            <div class="cell-sub"><span class="chip" th:text="${item.product.sku}">SKU</span></div>
+                        </td>
+                        <td class="num" th:text="${item.quantity} + ' ' + ${item.product.unit}">0</td>
+                        <td class="num muted" th:text="${item.receivedQty}">0</td>
+                        <td class="num strong" th:text="${item.remaining}">0</td>
+                        <td>
+                            <input class="input" type="number" min="0" th:max="${item.remaining}"
+                                   th:field="*{lines[__${st.index}__].quantity}" th:disabled="${item.remaining == 0}">
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="form-actions">
+                <a class="btn btn-light" th:href="@{/orders/{id}(id=${order.id})}">Отмена</a>
+                <button class="btn btn-success" type="submit"><i class="bi bi-check2-all"></i> Принять на склад</button>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="scripts"></div>
+</body>
+</html>

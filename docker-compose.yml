@@ -1,0 +1,16 @@
+# Необязательно: PostgreSQL в Docker одной командой — docker compose up -d
+services:
+  postgres:
+    image: postgres:16
+    container_name: supply-postgres
+    environment:
+      POSTGRES_DB: supply_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - supply-data:/var/lib/postgresql/data
+
+volumes:
+  supply-data:

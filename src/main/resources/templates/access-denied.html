@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#content}, ~{::#scripts})}">
+<head><title>Доступ запрещён</title></head>
+<body>
+<div id="content" class="error-page">
+    <div>
+        <div class="code">403</div>
+        <h2 style="margin:12px 0 8px">Недостаточно прав</h2>
+        <p class="muted">Это действие недоступно для вашей роли. Обратитесь к администратору системы.</p>
+        <a class="btn btn-primary" th:href="@{/}"><i class="bi bi-house"></i> На главную</a>
+    </div>
+</div>
+<div id="scripts"></div>
+</body>
+</html>

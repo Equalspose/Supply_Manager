@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#content}, ~{::#scripts})}">
+<head><title>Приёмка поставки</title></head>
+<body>
+<div id="content">
+    <a class="back-link" th:href="@{/deliveries}"><i class="bi bi-arrow-left"></i> Поставки</a>
+    <div class="page-head">
+        <div>
+            <h1>Приёмка поставки</h1>
+            <div class="sub">Шаг 1 из 2 — выберите заказ, по которому пришёл товар</div>
+        </div>
+    </div>
+    <div class="grid grid-3" th:if="${!awaiting.isEmpty()}">
+        <a class="card wh-card" th:each="o : ${awaiting}" th:href="@{/deliveries/new(orderId=${o.id})}">
+            <div class="top">
+                <div>
+                    <h3 th:text="${o.number}">ЗП</h3>
+                    <div class="cell-sub" th:text="'от ' + ${#temporals.format(o.orderDate, 'dd.MM.yyyy')}">дата</div>
+                </div>
+                <span th:replace="~{fragments/ui :: orderStatus(${o.status})}"></span>
+            </div>
+            <div class="meta">
+                <span><i class="bi bi-building"></i><span th:text="${o.supplier.name}"></span></span>
+                <span><i class="bi bi-buildings"></i><span th:text="${o.warehouse.name}"></span></span>
+                <span><i class="bi bi-calendar-event"></i>срок: <span th:text="${#temporals.format(o.expectedDate, 'dd.MM.yyyy')}"></span>
+                    <span class="badge badge-red plain" th:if="${o.overdue}">просрочен</span></span>
+            </div>
+            <div class="progress-row">
+                <div class="progress" style="flex:1"><span th:style="'width:' + ${o.progress} + '%'"></span></div>
+                <span class="pct" th:text="${o.progress} + '%'">0%</span>
+            </div>
+        </a>
+    </div>
+    <div class="card" th:if="${awaiting.isEmpty()}">
+        <div class="empty"><i class="bi bi-inbox"></i>Нет заказов, ожидающих поставки.<br>Заказ должен быть в статусе «Отправлен поставщику».</div>
+    </div>
+</div>
+<div id="scripts"></div>
+</body>
+</html>

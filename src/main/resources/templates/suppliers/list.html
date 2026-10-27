@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#content}, ~{::#scripts})}">
+<head><title>Поставщики</title></head>
+<body>
+<div id="content">
+    <div class="page-head">
+        <div>
+            <h1>Поставщики</h1>
+            <div class="sub">Контрагенты, с которыми заключены договоры поставки</div>
+        </div>
+        <div class="page-actions">
+            <a class="btn btn-primary" th:href="@{/suppliers/new}" sec:authorize="hasAnyRole('ADMIN','MANAGER')">
+                <i class="bi bi-plus-lg"></i> Добавить поставщика
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <form class="toolbar" method="get" th:action="@{/suppliers}" data-autosubmit>
+            <div class="search">
+                <i class="bi bi-search"></i>
+                <input class="input" name="q" th:value="${q}" placeholder="Название, ИНН или контактное лицо">
+            </div>
+            <select class="input" name="active">
+                <option value="">Все</option>
+                <option value="true" th:selected="${active == true}">Активные</option>
+                <option value="false" th:selected="${active == false}">Неактивные</option>
+            </select>
+            <button class="btn btn-light" type="submit"><i class="bi bi-search"></i> Найти</button>
+        </form>
+        <div class="table-wrap" th:if="${!suppliers.isEmpty()}">
+            <table class="table">
+                <thead>
+                <tr><th>Поставщик</th><th>ИНН / КПП</th><th>Контактное лицо</th><th>Связь</th><th>Рейтинг</th><th>Статус</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="s : ${suppliers}" class="clickable" th:data-href="@{/suppliers/{id}(id=${s.id})}">
+                    <td>
+                        <a class="cell-title" th:href="@{/suppliers/{id}(id=${s.id})}" th:text="${s.name}">Поставщик</a>
+                        <div class="cell-sub" th:text="${s.address}">адрес</div>
+                    </td>
+                    <td><span class="chip" th:text="${s.inn}">ИНН</span><div class="cell-sub" th:text="${s.kpp}"></div></td>
+                    <td th:text="${s.contactPerson ?: '—'}">—</td>
+                    <td>
+                        <div th:text="${s.phone}">тел</div>
+                        <a class="cell-sub" th:href="'mailto:' + ${s.email}" th:text="${s.email}">email</a>
+                    </td>
+                    <td><span th:replace="~{fragments/ui :: stars(${s.rating})}"></span>
+                        <span class="cell-sub" th:text="${s.rating}"></span></td>
+                    <td>
+                        <span class="badge badge-green" th:if="${s.active}">Активен</span>
+                        <span class="badge badge-gray" th:unless="${s.active}">Неактивен</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="empty" th:if="${suppliers.isEmpty()}"><i class="bi bi-building"></i>Поставщики не найдены</div>
+    </div>
+</div>
+<div id="scripts"></div>
+</body>
+</html>

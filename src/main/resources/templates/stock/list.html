@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#content}, ~{::#scripts})}">
+<head><title>Остатки</title></head>
+<body>
+<div id="content">
+    <div class="page-head">
+        <div>
+            <h1>Остатки на складах</h1>
+            <div class="sub">Текущее наличие оборудования и материалов</div>
+        </div>
+        <div class="page-actions">
+            <a class="btn btn-light" th:href="@{/stock/low}"><i class="bi bi-exclamation-triangle"></i> Дефицит</a>
+        </div>
+    </div>
+    <div class="card">
+        <form class="toolbar" method="get" th:action="@{/stock}" data-autosubmit>
+            <div class="search">
+                <i class="bi bi-search"></i>
+                <input class="input" name="q" th:value="${q}" placeholder="Артикул или наименование">
+            </div>
+            <select class="input" name="warehouseId">
+                <option value="">Все склады</option>
+                <option th:each="w : ${warehouses}" th:value="${w.id}" th:text="${w.code + ' · ' + w.region}" th:selected="${w.id == warehouseId}"></option>
+            </select>
+            <select class="input" name="categoryId">
+                <option value="">Все категории</option>
+                <option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.name}" th:selected="${c.id == categoryId}"></option>
+            </select>
+            <button class="btn btn-light" type="submit"><i class="bi bi-search"></i> Найти</button>
+        </form>
+        <div class="table-wrap" th:if="${!stock.isEmpty()}">
+            <table class="table">
+                <thead><tr><th>Склад</th><th>Артикул</th><th>Товар</th><th>Категория</th><th class="num">Количество</th><th class="num">Стоимость</th></tr></thead>
+                <tbody>
+                <tr th:each="s : ${stock}">
+                    <td><span class="chip" th:text="${s.warehouse.code}">MSK</span></td>
+                    <td class="muted" th:text="${s.product.sku}">SKU</td>
+                    <td class="cell-title" th:text="${s.product.name}">Товар</td>
+                    <td class="muted" th:text="${s.product.category.name}">Категория</td>
+                    <td class="num strong" th:text="${#numbers.formatInteger(s.quantity, 1, 'WHITESPACE')} + ' ' + ${s.product.unit}">0</td>
+                    <td class="num" th:text="${#numbers.formatDecimal(s.product.price * s.quantity, 1, 'WHITESPACE', 2, 'COMMA')} + ' ₽'">0</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="empty" th:if="${stock.isEmpty()}"><i class="bi bi-boxes"></i>Ничего не найдено</div>
+    </div>
+</div>
+<div id="scripts"></div>
+</body>
+</html>

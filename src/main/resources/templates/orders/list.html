@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#content}, ~{::#scripts})}">
+<head><title>Заказы поставщикам</title></head>
+<body>
+<div id="content">
+    <div class="page-head">
+        <div>
+            <h1>Заказы поставщикам</h1>
+            <div class="sub">Реестр закупок оборудования и материалов</div>
+        </div>
+        <div class="page-actions">
+            <a class="btn btn-light"
+               th:href="@{/orders/export(status=${status}, supplierId=${supplierId}, warehouseId=${warehouseId}, q=${q})}">
+                <i class="bi bi-file-earmark-spreadsheet"></i> Экспорт в Excel
+            </a>
+            <a class="btn btn-primary" th:href="@{/orders/new}" sec:authorize="hasAnyRole('ADMIN','MANAGER')">
+                <i class="bi bi-plus-lg"></i> Новый заказ
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <form class="toolbar" method="get" th:action="@{/orders}" data-autosubmit>
+            <div class="search">
+                <i class="bi bi-search"></i>
+                <input class="input" name="q" th:value="${q}" placeholder="Номер заказа или поставщик">
+            </div>
+            <select class="input" name="status">
+                <option value="">Все статусы</option>
+                <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.title}" th:selected="${s == status}"></option>
+            </select>
+            <select class="input" name="supplierId">
+                <option value="">Все поставщики</option>
+                <option th:each="s : ${suppliers}" th:value="${s.id}" th:text="${s.name}" th:selected="${s.id == supplierId}"></option>
+            </select>
+            <select class="input" name="warehouseId">
+                <option value="">Все склады</option>
+                <option th:each="w : ${warehouses}" th:value="${w.id}" th:text="${w.code + ' · ' + w.region}" th:selected="${w.id == warehouseId}"></option>
+            </select>
+            <button class="btn btn-light" type="submit"><i class="bi bi-funnel"></i> Найти</button>
+            <a class="btn btn-ghost" th:href="@{/orders}" th:if="${q != null or status != null or supplierId != null or warehouseId != null}">Сбросить</a>
+        </form>
+
+        <div class="table-wrap" th:if="${orders.hasContent()}">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Номер / дата</th>
+                    <th>Поставщик</th>
+                    <th>Склад</th>
+                    <th>Срок поставки</th>
+                    <th>Статус</th>
+                    <th>Выполнение</th>
+                    <th class="num">Сумма</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="o : ${orders}" class="clickable" th:data-href="@{/orders/{id}(id=${o.id})}">
+                    <td>
+                        <a class="cell-title" th:href="@{/orders/{id}(id=${o.id})}" th:text="${o.number}">ЗП</a>
+                        <div class="cell-sub" th:text="${#temporals.format(o.orderDate, 'dd.MM.yyyy')}">дата</div>
+                    </td>
+                    <td>
+                        <div th:text="${o.supplier.name}">Поставщик</div>
+                        <div class="cell-sub" th:text="'ИНН ' + ${o.supplier.inn}">ИНН</div>
+                    </td>
+                    <td><span class="chip" th:text="${o.warehouse.code}">MSK</span></td>
+                    <td>
+                        <span th:text="${#temporals.format(o.expectedDate, 'dd.MM.yyyy')}">дата</span>
+                        <span class="badge badge-red plain" th:if="${o.overdue}">просрочен</span>
+                    </td>
+                    <td><span th:replace="~{fragments/ui :: orderStatus(${o.status})}"></span></td>
+                    <td style="min-width:140px">
+                        <div class="progress-row">
+                            <div class="progress" style="flex:1" th:classappend="${o.progress == 100} ? 'ok'">
+                                <span th:style="'width:' + ${o.progress} + '%'"></span>
+                            </div>
+                            <span class="pct" th:text="${o.progress} + '%'">0%</span>
+                        </div>
+                    </td>
+                    <td class="num strong" th:text="${#numbers.formatDecimal(o.totalAmount, 1, 'WHITESPACE', 2, 'COMMA')} + ' ₽'">0</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="empty" th:unless="${orders.hasContent()}">
+            <i class="bi bi-inbox"></i>Заказы не найдены
+        </div>
+
+        <div th:replace="~{fragments/ui :: pager(${orders}, ${'/orders?q=' + (q ?: '') + '&status=' + (status ?: '') + '&supplierId=' + (supplierId ?: '') + '&warehouseId=' + (warehouseId ?: '') + '&'})}"></div>
+    </div>
+</div>
+<div id="scripts"></div>
+</body>
+</html>

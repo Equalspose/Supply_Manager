@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#content}, ~{::#scripts})}">
+<head><title>Поставки</title></head>
+<body>
+<div id="content">
+    <div class="page-head">
+        <div>
+            <h1>Поставки</h1>
+            <div class="sub">Журнал приёмки товара на склады</div>
+        </div>
+        <div class="page-actions">
+            <a class="btn btn-accent" th:href="@{/deliveries/new}" sec:authorize="hasAnyRole('ADMIN','STOREKEEPER')">
+                <i class="bi bi-box-arrow-in-down"></i> Принять поставку
+            </a>
+        </div>
+    </div>
+
+    <div class="card mb" th:if="${!awaiting.isEmpty()}">
+        <div class="card-head">
+            <h3><i class="bi bi-hourglass-split" style="color:var(--violet)"></i> Ожидают поставки</h3>
+            <span class="hint" th:text="${awaiting.size()} + ' заказ(ов)'">0</span>
+        </div>
+        <div class="table-wrap">
+            <table class="table">
+                <thead><tr><th>Заказ</th><th>Поставщик</th><th>Склад</th><th>Срок</th><th>Выполнение</th><th></th></tr></thead>
+                <tbody>
+                <tr th:each="o : ${awaiting}">
+                    <td><a class="cell-title" th:href="@{/orders/{id}(id=${o.id})}" th:text="${o.number}">ЗП</a></td>
+                    <td th:text="${o.supplier.name}">Поставщик</td>
+                    <td><span class="chip" th:text="${o.warehouse.code}">MSK</span></td>
+                    <td>
+                        <span th:text="${#temporals.format(o.expectedDate, 'dd.MM.yyyy')}">дата</span>
+                        <span class="badge badge-red plain" th:if="${o.overdue}">просрочен</span>
+                    </td>
+                    <td style="min-width:140px">
+                        <div class="progress-row">
+                            <div class="progress" style="flex:1"><span th:style="'width:' + ${o.progress} + '%'"></span></div>
+                            <span class="pct" th:text="${o.progress} + '%'">0%</span>
+                        </div>
+                    </td>
+                    <td class="num">
+                        <a class="btn btn-light btn-sm" sec:authorize="hasAnyRole('ADMIN','STOREKEEPER')"
+                           th:href="@{/deliveries/new(orderId=${o.id})}"><i class="bi bi-box-arrow-in-down"></i> Принять</a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <form class="toolbar" method="get" th:action="@{/deliveries}">
+            <div class="search">
+                <i class="bi bi-search"></i>
+                <input class="input" name="q" th:value="${q}" placeholder="Номер поставки, заказа, накладной или поставщик">
+            </div>
+            <button class="btn btn-light" type="submit"><i class="bi bi-search"></i> Найти</button>
+            <a class="btn btn-ghost" th:href="@{/deliveries}" th:if="${q != null and q != ''}">Сбросить</a>
+        </form>
+        <div class="table-wrap" th:if="${deliveries.hasContent()}">
+            <table class="table">
+                <thead>
+                <tr><th>Поставка</th><th>Заказ</th><th>Поставщик</th><th>Склад</th><th>Накладная</th><th>Статус</th><th class="num">Единиц</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="d : ${deliveries}" class="clickable" th:data-href="@{/deliveries/{id}(id=${d.id})}">
+                    <td>
+                        <a class="cell-title" th:href="@{/deliveries/{id}(id=${d.id})}" th:text="${d.number}">ПТ</a>
+                        <div class="cell-sub" th:text="${#temporals.format(d.deliveryDate, 'dd.MM.yyyy')}">дата</div>
+                    </td>
+                    <td><a th:href="@{/orders/{id}(id=${d.order.id})}" th:text="${d.order.number}">ЗП</a></td>
+                    <td th:text="${d.order.supplier.name}">Поставщик</td>
+                    <td><span class="chip" th:text="${d.order.warehouse.code}">MSK</span></td>
+                    <td>
+                        <div th:text="${d.waybill ?: '—'}">—</div>
+                        <div class="cell-sub" th:text="${d.carrier}"></div>
+                    </td>
+                    <td><span class="badge" th:classappend="'badge-' + ${d.status.color}" th:text="${d.status.title}">ok</span></td>
+                    <td class="num strong" th:text="${d.totalQuantity}">0</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="empty" th:unless="${deliveries.hasContent()}"><i class="bi bi-truck"></i>Поставки не найдены</div>
+        <div th:replace="~{fragments/ui :: pager(${deliveries}, ${'/deliveries?q=' + (q ?: '') + '&'})}"></div>
+    </div>
+</div>
+<div id="scripts"></div>
+</body>
+</html>

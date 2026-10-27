@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#content}, ~{::#scripts})}">
+<head><title>Склады</title></head>
+<body>
+<div id="content">
+    <div class="page-head">
+        <div>
+            <h1>Склады</h1>
+            <div class="sub">Центральный и региональные склады макрорегиональных филиалов</div>
+        </div>
+        <div class="page-actions">
+            <a class="btn btn-primary" th:href="@{/warehouses/new}" sec:authorize="hasRole('ADMIN')">
+                <i class="bi bi-plus-lg"></i> Добавить склад
+            </a>
+        </div>
+    </div>
+    <div class="grid grid-3">
+        <a class="card wh-card" th:each="w : ${warehouses}" th:href="@{/warehouses/{id}(id=${w.id})}"
+           th:with="occ=${occupancy.get(w.id)}">
+            <div class="top">
+                <div>
+                    <span class="chip" th:text="${w.code}">MSK</span>
+                    <h3 style="margin-top:8px" th:text="${w.name}">Склад</h3>
+                </div>
+                <span class="badge badge-violet plain" th:text="${w.region}">Регион</span>
+            </div>
+            <div class="meta">
+                <span><i class="bi bi-geo-alt"></i><span th:text="${w.address}"></span></span>
+                <span><i class="bi bi-person"></i><span th:text="${w.manager ?: '—'}"></span></span>
+            </div>
+            <div>
+                <div class="progress-row" style="justify-content:space-between;margin-bottom:6px">
+                    <span class="muted">Заполненность</span><b th:text="${occ} + '%'">0%</b>
+                </div>
+                <div class="progress" th:classappend="${occ > 85} ? 'danger' : (${occ > 65} ? 'warn' : '')">
+                    <span th:style="'width:' + ${occ} + '%'"></span>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+<div id="scripts"></div>
+</body>
+</html>
